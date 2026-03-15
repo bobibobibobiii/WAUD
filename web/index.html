@@ -18,21 +18,51 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="一个极简主义的时间记录 App（网页版/PWA）。">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="waud">
+  <meta name="apple-mobile-web-app-title" content="在干啥WAUD">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>waud</title>
+  <title>在干啥WAUD</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body { height: 100%; }
+    body { margin: 0; }
+    #waud-splash {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+    }
+    @media (prefers-color-scheme: dark) {
+      #waud-splash { background: #000000; }
+    }
+    #waud-splash img {
+      width: 160px;
+      height: 160px;
+      object-fit: contain;
+      border-radius: 24px;
+    }
+  </style>
 </head>
 <body>
+  <div id="waud-splash">
+    <img src="assets/app_icon.jpg" alt="在干啥WAUD" />
+  </div>
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var el = document.getElementById('waud-splash');
+      if (el) el.remove();
+    });
+  </script>
 </body>
 </html>
