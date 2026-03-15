@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "40149883135",
+    "project_id": "androidwaud",
+    "storage_bucket": "androidwaud.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:40149883135:android:ecca0277b02ec8034fd4ca",
+        "android_client_info": {
+          "package_name": "com.waud.waud"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDq9_-3r_V3yJWY2qKMzGBzdxPLUScu-Gw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
