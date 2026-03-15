@@ -389,6 +389,16 @@ class _QuickInputPageState extends State<QuickInputPage> {
                               ),
                             ],
                           ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: CupertinoButton(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              color: CupertinoColors.systemGrey.withAlpha((255 * 0.1).round()),
+                              onPressed: _confirmDeleteLastRecord,
+                              child: const Text('删除本次记录', style: TextStyle(color: CupertinoColors.destructiveRed)),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -405,5 +415,33 @@ class _QuickInputPageState extends State<QuickInputPage> {
   /// 跳转到数据看板
   void _goToDashboard() {
     Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+  }
+
+  void _confirmDeleteLastRecord() {
+    final id = _lastRecordId;
+    if (id == null) return;
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('删除记录'),
+        content: const Text('确定要删除刚才这条记录吗？'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('取消'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text('删除'),
+            onPressed: () async {
+              await _db.deleteRecord(id);
+              if (!context.mounted) return;
+              Navigator.of(context).pop();
+              Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

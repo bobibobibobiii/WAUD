@@ -307,11 +307,42 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
                       if (mounted) setState(_loadData);
                     },
                   ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    minimumSize: const Size(32, 32),
+                    child: Icon(CupertinoIcons.trash, size: 18, color: subTextColor),
+                    onPressed: () => _confirmDeleteRecord(record.id),
+                  ),
                 ],
               ),
             );
           })),
       ],
+    );
+  }
+
+  void _confirmDeleteRecord(String recordId) {
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('删除记录'),
+        content: const Text('确定要删除这条记录吗？'),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('取消'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            child: const Text('删除'),
+            onPressed: () async {
+              await _db.deleteRecord(recordId);
+              if (!context.mounted) return;
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      ),
     );
   }
 
