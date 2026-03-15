@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/cupertino.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 
@@ -15,7 +16,6 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> with SingleTickerProviderStateMixin {
   final DatabaseService _db = DatabaseService();
-  late List<Record> _todayRecords;
   late double _intervalValue;
   // 记录哪些条目处于展开状态（用于轻触展开/收起）
   final Set<String> _expandedRecordIds = {};
@@ -27,7 +27,6 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
   }
 
   void _loadData() {
-    _todayRecords = _db.getTodayRecords();
     _intervalValue = _db.settings.notificationIntervalMinutes.toDouble();
   }
 
@@ -60,46 +59,46 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
           ],
         ),
       ),
-      child: CustomScrollView(
-        slivers: [
-          CupertinoSliverRefreshControl(
-            onRefresh: () async {
-              setState(_loadData);
-            },
-          ),
-          // 添加顶部占位，避免在使用透明导航栏时内容被遮挡
-          SliverToBoxAdapter(
-            child: SizedBox(height: MediaQuery.of(context).padding.top + 44.0),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 模块2：占比环形图
-                  _buildPieChart(isDark, textColor, subTextColor),
-                  const SizedBox(height: 30),
-
-                  // 模块1：时间轴
-                  _buildTimeline(isDark, textColor, subTextColor),
-                  const SizedBox(height: 30),
-
-                  // 模块3：间隔设置
-                  _buildIntervalSlider(isDark, textColor, subTextColor),
-                  const SizedBox(height: 50),
-                ],
+      child: ValueListenableBuilder(
+        valueListenable: _db.records.listenable(),
+        builder: (context, _, __) {
+          final todayRecords = _db.getTodayRecords();
+          return CustomScrollView(
+            slivers: [
+              CupertinoSliverRefreshControl(
+                onRefresh: () async {
+                  setState(_loadData);
+                },
               ),
-            ),
-          ),
-        ],
+              SliverToBoxAdapter(
+                child: SizedBox(height: MediaQuery.of(context).padding.top + 44.0),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildPieChart(todayRecords, isDark, textColor, subTextColor),
+                      const SizedBox(height: 30),
+                      _buildTimeline(todayRecords, isDark, textColor, subTextColor),
+                      const SizedBox(height: 30),
+                      _buildIntervalSlider(isDark, textColor, subTextColor),
+                      const SizedBox(height: 50),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   /// 构建占比环形图
-  Widget _buildPieChart(bool isDark, Color textColor, Color subTextColor) {
-    final categoryStats = _calculateCategoryStats();
+  Widget _buildPieChart(List<Record> todayRecords, bool isDark, Color textColor, Color subTextColor) {
+    final categoryStats = _calculateCategoryStats(todayRecords);
     
     if (categoryStats.isEmpty) {
       return Center(
@@ -192,10 +191,10 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
   }
 
   /// 计算各分类统计
-  List<CategoryStat> _calculateCategoryStats() {
+  List<CategoryStat> _calculateCategoryStats(List<Record> todayRecords) {
     final Map<String, CategoryStat> stats = {};
     
-    for (final record in _todayRecords) {
+    for (final record in todayRecords) {
       if (stats.containsKey(record.categoryName)) {
         stats[record.categoryName]!.count++;
       } else {
@@ -213,7 +212,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
   }
 
   /// 构建时间轴
-  Widget _buildTimeline(bool isDark, Color textColor, Color subTextColor) {
+  Widget _buildTimeline(List<Record> todayRecords, bool isDark, Color textColor, Color subTextColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -226,7 +225,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
           ),
         ),
         const SizedBox(height: 16),
-        if (_todayRecords.isEmpty)
+        if (todayRecords.isEmpty)
           Padding(
             padding: const EdgeInsets.all(20),
             child: Text(
@@ -235,7 +234,7 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
             ),
           )
         else
-          ...(_todayRecords.take(20).map((record) {
+          ...(todayRecords.take(20).map((record) {
             final time = '${record.timestamp.hour.toString().padLeft(2, '0')}:${record.timestamp.minute.toString().padLeft(2, '0')}';
             final color = Color(int.parse(record.colorHex.replaceFirst('#', '0xFF')));
             
@@ -361,13 +360,15 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
   }
 
   /// 打开设置页
-  void _openSettings() {
-    Navigator.of(context).pushNamed('/settings');
+  Future<void> _openSettings() async {
+    await Navigator.of(context).pushNamed('/settings');
+    if (mounted) setState(_loadData);
   }
 
   /// 跳转到快速输入页
-  void _goToQuickInput() {
-    Navigator.of(context).pushNamed('/quick_input', arguments: {'fromNotification': false});
+  Future<void> _goToQuickInput() async {
+    await Navigator.of(context).pushNamed('/quick_input', arguments: {'fromNotification': false});
+    if (mounted) setState(_loadData);
   }
 }
 
